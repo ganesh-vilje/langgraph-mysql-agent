@@ -55,3 +55,4 @@ def get_schema():
         return {"schema": schema_info}
     except Exception as e:
         return {"error": f"Error fetching schema: {e}"}
+
