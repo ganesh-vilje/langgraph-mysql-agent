@@ -41,8 +41,10 @@ def run_odata_query(entity_name: str, filters: str = "", select: str = "", top: 
         
         # Handle different entity name mappings for this specific NAV system
         entity_mapping = {
-            "SalesHeaders": "SalesList",  # Based on the error, SalesHeaders maps to SalesList
-            "SalesLines": "SalesList",    # Sales lines might also be in SalesList
+            "SalesHeaders": "SalesOrder",  # SalesHeaders maps to SalesOrder
+            "SalesLines": "SalesOrder",    # Sales lines might also be in SalesOrder
+            "SalesList": "SalesList",     # SalesList maps to SalesOrder
+            "SalesOrder": "SalesOrder",    # SalesOrder maps to SalesOrder
             "Customers": "Customers",
             "Items": "Items",
             "Vendors": "Vendors"
@@ -51,9 +53,15 @@ def run_odata_query(entity_name: str, filters: str = "", select: str = "", top: 
         # Get the correct entity name
         actual_entity = entity_mapping.get(entity_name, entity_name)
         
+        # Debug: Print entity mapping
+        print(f"🔍 Entity mapping: '{entity_name}' -> '{actual_entity}'", flush=True)
+        
         # Build the OData URL - handle case where base_url already includes the entity
+        base_url = base_url.rstrip('/')
+        
+        # Check if base_url already ends with the entity we want to query
         if base_url.endswith(f'/{actual_entity}'):
-            url = base_url
+            url = base_url  # Use base_url as-is
         else:
             url = f"{base_url}/{actual_entity}"
         
@@ -133,8 +141,9 @@ def get_odata_schema():
                     {"name": "Customers", "description": "Customer master data"},
                     {"name": "Items", "description": "Item master data"},
                     {"name": "SalesList", "description": "Sales orders (headers and lines combined)"},
-                    {"name": "SalesHeaders", "description": "Sales order headers (maps to SalesList)"},
-                    {"name": "SalesLines", "description": "Sales order lines (maps to SalesList)"},
+                    {"name": "SalesHeaders", "description": "Sales order headers (maps to SalesOrder)"},
+                    {"name": "SalesLines", "description": "Sales order lines (maps to SalesOrder)"},
+                    {"name": "SalesOrder", "description": "Sales order (maps to SalesOrder)"},
                     {"name": "PurchaseHeaders", "description": "Purchase order headers"},
                     {"name": "PurchaseLines", "description": "Purchase order lines"},
                     {"name": "Vendors", "description": "Vendor master data"},
