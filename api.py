@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from agent.agent import build_agent
+from services.email_service import email_service
 
 # Load env vars
 load_dotenv()
@@ -194,6 +195,10 @@ def handle_freshdesk_webhook(request: dict):
         subject = webhook_data.get("ticket_subject", "")
         description = webhook_data.get("ticket_description", "")
         
+        # Extract agent information from webhook
+        agent_email = webhook_data.get("agent_email")
+        agent_name = webhook_data.get("agent_name", "Support Agent")
+        
         # Clean HTML from description
         import re
         description = re.sub(r'<[^>]+>', '', description)  # Remove HTML tags
@@ -228,6 +233,30 @@ def handle_freshdesk_webhook(request: dict):
         print("-"*80)
         print(agent_response)
         print("="*80)
+        
+        # Send email response to customer
+        print("📧 SENDING EMAIL RESPONSE:")
+        print("-"*80)
+        print(f"Agent Email: {agent_email}")
+        print(f"Agent Name: {agent_name}")
+        print(f"Customer Email: {customer_email}")
+        print("-"*80)
+        
+        email_sent = email_service.send_customer_response(
+            customer_email=customer_email,
+            customer_name=customer_name,
+            agent_response=agent_response,
+            agent_email=agent_email,
+            agent_name=agent_name,
+            ticket_id=ticket_id
+        )
+        
+        if email_sent:
+            print("✅ Email sent successfully!")
+        else:
+            print("❌ Failed to send email")
+        
+        print("="*80)
         print("✅ Response processed successfully!")
         print("="*80 + "\n")
         
@@ -236,7 +265,8 @@ def handle_freshdesk_webhook(request: dict):
             "message": "Query processed successfully",
             "ticket_id": ticket_id,
             "customer_email": customer_email,
-            "response": agent_response
+            "response": agent_response,
+            "email_sent": email_sent
         }
         
     except Exception as e:
